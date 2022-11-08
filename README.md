@@ -15,3 +15,4 @@ I would start with chosing the most valuable features. Size, bedrooms, location.
 Remember to convert currency correctly when evaluating.
 
 
+Importante featurae!!
