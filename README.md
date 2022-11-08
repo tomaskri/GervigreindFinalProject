@@ -16,47 +16,32 @@ Remember to convert currency correctly when evaluating.
 
 
 Importante featurae!!
-0 id
-1 listing_url
-2 scrape_id
-3 last_scraped
-4 source
-5 name
-6 description
-7 neighborhood_overview
-8 picture_url
-9 host_id
-10 host_url
-11 host_name
-12 host_since
-13 host_location
-14 host_about
-15 host_response_time
-16 host_response_rate
-17 host_acceptance_rate
-18 host_is_superhost
-19 host_thumbnail_url
-20 host_picture_url
-21 host_neighbourhood
-22 host_listings_count
-23 host_total_listings_count
-24 host_verifications
-25 host_has_profile_pic
-26 host_identity_verified
+
+
+34 accommodates
+35 bathrooms
+37 bedrooms
+38 beds
+
+
+40 price
+
+
 27 neighbourhood
 28 neighbourhood_cleansed
 29 neighbourhood_group_cleansed
 30 latitude
 31 longitude
+
+
+
 32 property_type
 33 room_type
-34 accommodates
-35 bathrooms
+
 36 bathrooms_text
-37 bedrooms
-38 beds
+
 39 amenities
-40 price
+
 41 minimum_nights
 42 maximum_nights
 43 minimum_minimum_nights
