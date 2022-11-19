@@ -1,5 +1,9 @@
 # GervigreindFinalProject
 
+Data summary:
+
+| Country | City | Number of listings |
+
 Meeting with Ana 8/11/2022:
 
 Questions: Which data to select?
