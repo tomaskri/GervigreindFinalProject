@@ -18,7 +18,7 @@ North America:
 | Canada | Vancouver | 5,572 |  0.7501 |
 
 Europe:
-| Country | City | Number of listings | Exchange rate 08/22 (local cur to Euros)
+| Country | City | Number of listings | Exchange rate 09/22 (local cur to Euros)
 | -------- | -------- | -------- | -------- |
 | Austria | Vienna | 11,797 |  |
 | Belgium | Brussels | 6,065 |  |
@@ -36,8 +36,23 @@ Europe:
 | Italy | Milan | 19,248 |  |
 | Italy | Rome | 24,782 |  |
 | Italy | Venice | 7,988 |  |
-
-
+| Norway | Oslo | 5,371 |  |
+| Portugal | Lisbon | 19,651 |  |
+| Portugal | Porto | 11,804 |  |
+| Spain | Barcelona | 16,920 |  |
+| Spain | Madrid | 20,681 |  |
+| Spain | Mallorca | 19,049 |  |
+| Spain | Sevilla | 6,494 |  |
+| Spain | Valencia | Valencia |  |
+| Sweden | Stockholm | 3,990 |  |
+| Switzerland | Geneva | 3,370 |  |
+| Switzerland | Zurich | 2,246 |  |
+| Netherlands | Amsterdam | 6,893 |  |
+| Netherlands | Rotterdam | 1,042 |  |
+| Turkey | Istanbul | 33,259 |  |
+| UK | Edinburgh | 7,818 |  |
+| UK | Greater Manchester | 4,341 |  |
+| UK | London | 69,351 |  |
 
 | France | Lyon |  |  |
 Meeting with Ana 8/11/2022:
