@@ -20,41 +20,40 @@ North America:
 Europe:
 | Country | City | Number of listings | Exchange rate 09/22 (local cur to Euros)
 | -------- | -------- | -------- | -------- |
-| Austria | Vienna | 11,797 |  |
-| Belgium | Brussels | 6,065 |  |
-| Czech Republic | Prague | 7,537 |  |
-| Denmark | Copenhagen | 13,815 |  |
-| France | Bordeax | 10,885 |  |
-| France | Paris | 61,365 |  |
-| France | Lyon | 10,934 |  |
-| Germany | Berlin | 16,680 |  |
-| Germany | Munich | 6,627 |  |
-| Greece | Athens | 12,165 |  |
-| Greece | Crete | 23,724 |  |
-| Ireland | Dublin | 7,566 |  |
-| Italy | Florence | 11,138 |  |
-| Italy | Milan | 19,248 |  |
-| Italy | Rome | 24,782 |  |
-| Italy | Venice | 7,988 |  |
-| Norway | Oslo | 5,371 |  |
-| Portugal | Lisbon | 19,651 |  |
-| Portugal | Porto | 11,804 |  |
-| Spain | Barcelona | 16,920 |  |
-| Spain | Madrid | 20,681 |  |
-| Spain | Mallorca | 19,049 |  |
-| Spain | Sevilla | 6,494 |  |
-| Spain | Valencia | Valencia |  |
-| Sweden | Stockholm | 3,990 |  |
-| Switzerland | Geneva | 3,370 |  |
-| Switzerland | Zurich | 2,246 |  |
-| Netherlands | Amsterdam | 6,893 |  |
-| Netherlands | Rotterdam | 1,042 |  |
-| Turkey | Istanbul | 33,259 |  |
-| UK | Edinburgh | 7,818 |  |
-| UK | Greater Manchester | 4,341 |  |
-| UK | London | 69,351 |  |
+| Austria | Vienna | 11,797 | 1.00 |
+| Belgium | Brussels | 6,065 | 1.00 |
+| Czech Republic | Prague | 7,537 | 0.0406 |
+| Denmark | Copenhagen | 13,815 | 0.1344 |
+| France | Bordeax | 10,885 | 1.00 |
+| France | Paris | 61,365 | 1.00 |
+| France | Lyon | 10,934 | 1.00 |
+| Germany | Berlin | 16,680 | 1.00 |
+| Germany | Munich | 6,627 | 1.00 |
+| Greece | Athens | 12,165 | 1.00 |
+| Greece | Crete | 23,724 | 1.00 |
+| Ireland | Dublin | 7,566 | 1.00 |
+| Italy | Florence | 11,138 | 1.00 |
+| Italy | Milan | 19,248 | 1.00 |
+| Italy | Rome | 24,782 | 1.00 |
+| Italy | Venice | 7,988 | 1.00 |
+| Norway | Oslo | 5,371 | 0.097 |
+| Portugal | Lisbon | 19,651 | 1.00 |
+| Portugal | Porto | 11,804 | 1.00 |
+| Spain | Barcelona | 16,920 | 1.00 |
+| Spain | Madrid | 20,681 | 1.00 |
+| Spain | Mallorca | 19,049 | 1.00 |
+| Spain | Sevilla | 6,494 | 1.00 |
+| Spain | Valencia | Valencia | 1.00 |
+| Sweden | Stockholm | 3,990 | 0.0921 |
+| Switzerland | Geneva | 3,370 | 1.0403 |
+| Switzerland | Zurich | 2,246 | 1.0403 |
+| Netherlands | Amsterdam | 6,893 | 1.00 |
+| Netherlands | Rotterdam | 1,042 | 1.00 |
+| Turkey | Istanbul | 33,259 | 0.0547 |
+| UK | Edinburgh | 7,818 | 1.1408 |
+| UK | Greater Manchester | 4,341 | 1.1408 |
+| UK | London | 69,351 | 1.1408  |
 
-| France | Lyon |  |  |
 Meeting with Ana 8/11/2022:
 
 Questions: Which data to select?
