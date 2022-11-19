@@ -1,20 +1,45 @@
 # GervigreindFinalProject
 
 Data summary:
-
-| Country | City | Number of listings | Exchange rate (local cur to Euros)
+North America:
+| Country | City | Number of listings | Exchange rate 09/22 (local cur to Euros)
 | -------- | -------- | -------- | -------- |
-| USA | Austin | 18,337 |  0.9963 |
-| USA | Boston | 5,185 |  0.9963 |
-| USA | Chicago | 7,414 |  0.9963 |
-| USA | Dallas | 6,546 |  0.9963 |
-| USA | Los Angeles | 41,815 |  0.9963 |
-| USA | New York City | 39,881 |  0.9963 |
-| USA | San Francisco | 6,629  |  0.9963 |
-| USA | Seattle | 5,904 |  0.9963 |
-| USA | Washington, D.C. | 6,473 |  0.9963 |
-| Canada | Montreal | 13,621 |  0.7671 |
+| USA | Austin | 18,337 |  1.003 |
+| USA | Boston | 5,185 |  1.003 |
+| USA | Chicago | 7,414 |  1.003 |
+| USA | Dallas | 6,546 |  1.003 |
+| USA | Los Angeles | 41,815 |  1.003 |
+| USA | New York City | 39,881 |  1.003 |
+| USA | San Francisco | 6,629  |  1.003 |
+| USA | Seattle | 5,904 |  1.003 |
+| USA | Washington, D.C. | 6,473 |  1.003 |
+| Canada | Montreal | 13,621 |  0.7501 |
+| Canada | Toronto | 15,978 |  0.7501 |
+| Canada | Vancouver | 5,572 |  0.7501 |
 
+Europe:
+| Country | City | Number of listings | Exchange rate 08/22 (local cur to Euros)
+| -------- | -------- | -------- | -------- |
+| Austria | Vienna | 11,797 |  |
+| Belgium | Brussels | 6,065 |  |
+| Czech Republic | Prague | 7,537 |  |
+| Denmark | Copenhagen | 13,815 |  |
+| France | Bordeax | 10,885 |  |
+| France | Paris | 61,365 |  |
+| France | Lyon | 10,934 |  |
+| Germany | Berlin | 16,680 |  |
+| Germany | Munich | 6,627 |  |
+| Greece | Athens | 12,165 |  |
+| Greece | Crete | 23,724 |  |
+| Ireland | Dublin | 7,566 |  |
+| Italy | Florence | 11,138 |  |
+| Italy | Milan | 19,248 |  |
+| Italy | Rome | 24,782 |  |
+| Italy | Venice | 7,988 |  |
+
+
+
+| France | Lyon |  |  |
 Meeting with Ana 8/11/2022:
 
 Questions: Which data to select?
