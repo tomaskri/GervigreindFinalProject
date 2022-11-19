@@ -5,6 +5,14 @@ Data summary:
 | Country | City | Number of listings |
 | -------- | -------- | -------- |
 | USA | Austin | 18,337 |
+| USA | Boston | 5,185 |
+| USA | Chicago | 7,414 |
+| USA | Dallas | 6,546 |
+| USA | Los Angeles | 41,815 |
+| USA | New York City | 39,881 |
+| USA | San Francisco | 6,629  |
+| USA | Seattle | 5,904 |
+| USA | Washington, D.C. | 6,473 |
 
 Meeting with Ana 8/11/2022:
 
