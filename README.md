@@ -3,6 +3,8 @@
 Data summary:
 
 | Country | City | Number of listings |
+| -------- | -------- | -------- |
+| USA | Austin | 18,337 |
 
 Meeting with Ana 8/11/2022:
 
