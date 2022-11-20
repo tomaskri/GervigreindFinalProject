@@ -1,5 +1,11 @@
 # GervigreindFinalProject
 
+Hvaða vandamál á þetta verkefni að leysa?
+- Hjálpa airbnb hosts að ákveða verð fyrir þeirra listing (þá er modelið City specific)
+  - er eitthvað feature sem segir til um bókunarhlutfall
+- Hjálpa airbnb leigendum að vita hvort listing sé over/under valued
+
+
 Data summary:
 North America:
 | Country | City | Number of listings | Exchange rate 09/22 (local cur to Euros)
