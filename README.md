@@ -1,5 +1,14 @@
 # GervigreindFinalProject
 
+Hvaða vandamál á þetta verkefni að leysa?
+- Hjálpa airbnb hosts að ákveða verð fyrir þeirra listing (þá er modelið City specific)
+  - er eitthvað feature sem segir til um bókunarhlutfall
+- Hjálpa airbnb leigendum að vita hvort listing sé over/under valued
+
+Features til að pæla í:
+- number_of_reviews_ltm
+- number_of_reviews_l30d
+
 Data summary:
 North America:
 | Country | City | Number of listings | Exchange rate 09/22 (local cur to Euros)
@@ -43,7 +52,7 @@ Europe:
 | Spain | Madrid | 20,681 | 1.00 |
 | Spain | Mallorca | 19,049 | 1.00 |
 | Spain | Sevilla | 6,494 | 1.00 |
-| Spain | Valencia | Valencia | 1.00 |
+| Spain | Valencia | 7,355 | 1.00 |
 | Sweden | Stockholm | 3,990 | 0.0921 |
 | Switzerland | Geneva | 3,370 | 1.0403 |
 | Switzerland | Zurich | 2,246 | 1.0403 |
