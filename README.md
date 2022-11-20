@@ -43,7 +43,7 @@ Europe:
 | Spain | Madrid | 20,681 | 1.00 |
 | Spain | Mallorca | 19,049 | 1.00 |
 | Spain | Sevilla | 6,494 | 1.00 |
-| Spain | Valencia | Valencia | 1.00 |
+| Spain | Valencia | 7,355 | 1.00 |
 | Sweden | Stockholm | 3,990 | 0.0921 |
 | Switzerland | Geneva | 3,370 | 1.0403 |
 | Switzerland | Zurich | 2,246 | 1.0403 |
