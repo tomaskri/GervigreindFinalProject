@@ -5,6 +5,9 @@ Hvaða vandamál á þetta verkefni að leysa?
   - er eitthvað feature sem segir til um bókunarhlutfall
 - Hjálpa airbnb leigendum að vita hvort listing sé over/under valued
 
+Features til að pæla í:
+- number_of_reviews_ltm
+- number_of_reviews_l30d
 
 Data summary:
 North America:
