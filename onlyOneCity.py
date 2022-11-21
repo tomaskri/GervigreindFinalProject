@@ -267,6 +267,66 @@ X, y, featureNames, featureDict = getCityData('copenhagen')
 
 
 # %%
+# SVM implemented with leave-one-out cross-validation
+# from sklearn.model_selection import LeaveOneOut
+# from sklearn.model_selection import cross_val_score
+# from sklearn.svm import SVR
+
+
+# X_data = np.asarray(X).astype('float32')
+# y_data = np.asarray(y).astype('float32')
+# # adding the price column back to feature array before shuffling
+# all_data = np.append(X_data, y_data.reshape(-1,1), axis=1)
+# np.random.shuffle(all_data)
+# X_data = all_data[:,:-1]
+# y_data = all_data[:,-1]
+
+# svr_model = SVR(C=60, epsilon=0.95)
+# loo = LeaveOneOut()
+# scores = cross_val_score(estimator=svr_model, 
+#                         X=X_data, 
+#                         y=y_data, 
+#                         scoring='r2',
+#                         cv=loo,
+#                         n_jobs=-1)
+
+# mean_score = np.mean(scores)
+# print(mean_score)
+
+# %%
+# SVR implemented with k-fold cross-validation (dataset too large for leave-one-out)
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+from sklearn.svm import SVR, NuSVR
+from sklearn import metrics
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+
+X_data = np.asarray(X).astype('float32')
+y_data = np.asarray(y).astype('float32')
+
+X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2) 
+# adding the price column back to feature array before shuffling
+
+svr_pipeline = make_pipeline(StandardScaler(), NuSVR(nu=0.8, C=60))
+print(svr_pipeline)
+# svr_pipeline.fit(X_train, y_train)
+cv = KFold(n_splits=5)
+scores = cross_val_score(estimator=svr_pipeline, 
+                        X=X_data, 
+                        y=y_data, 
+                        scoring='r2',
+                        cv=cv,
+                        n_jobs=-1)
+print(scores)
+mean_score = np.mean(scores)
+print(mean_score)
+
+# %%
+import sklearn
+sklearn.metrics.get_scorer_names()
+#%%
 # Neural network on chosen city
 
 X = np.asarray(X).astype('float32')
