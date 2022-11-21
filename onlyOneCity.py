@@ -9,6 +9,7 @@ import re
 import ast 
 from sklearn.inspection import permutation_importance
 import geopy.distance as dist
+from sklearn.metrics import r2_score
 
 def getKilometersFromCenter(data, city):
     kilometers = np.zeros(data.shape[0])
@@ -262,8 +263,8 @@ def getCityData(city):
 
     return X, y, featureNames, featureDict
 # %%
-
-X, y, featureNames, featureDict = getCityData('copenhagen')
+city = 'copenhagen'
+X, y, featureNames, featureDict = getCityData(city)
 
 
 # %%
@@ -278,6 +279,28 @@ X_train, X_testval, y_train, y_testval = train_test_split(X, y, test_size=0.20)
 X_test, X_val, y_test, y_val = train_test_split(X_testval, y_testval, test_size=0.5)
 
 print(X_train.shape, X_test.shape, X_val.shape)  
+
+
+# %%
+from sklearn.linear_model import LinearRegression
+
+linear_model = LinearRegression()
+score = 0
+predictions = []
+for i in range(X.shape[0]):
+    X_train = np.delete(X, i, axis=0)
+    y_train = np.delete(y, i)
+    X_test = X[i, :].reshape(1, -1)
+    linear_model.fit(X_train, y_train)
+    predictions.append(linear_model.predict(X_test)) 
+
+print(city, "LeaveOneOut r2:", round(r2_score(y, predictions),4))
+
+
+
+
+
+
 # %%
 #normalize our data
 from sklearn.preprocessing import StandardScaler
@@ -288,7 +311,7 @@ X_test_sc = X_scaler.transform(X_test)
 
 X_train_sc.shape
 # %%
-from sklearn.metrics import r2_score
+
 from tensorflow import keras
 from tensorflow.keras import layers
 from keras.models import Sequential
@@ -409,40 +432,7 @@ print("Validation score:", svr_val_score)
 
 plotPredVsReal(y_test, best_model.predict(X_test), 750)
 
-# %%
 
-# import numpy as np
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.pipeline import Pipeline
-# from sklearn.model_selection import train_test_split, GridSearchCV
-# from sklearn.linear_model import Lasso
-
-# pipeline = Pipeline([
-#                      ('scaler',StandardScaler()),
-#                      ('model',Lasso())
-# ])
-
-# search = GridSearchCV(pipeline,
-#                       {'model__alpha':np.arange(0.1,10,0.1)},
-#                       cv = 5, scoring="r2",verbose=False
-#                       )
-
-# search.fit(X_train,y_train)
-
-# print(search.best_params_)
-# coefficients = search.best_estimator_.named_steps['model'].coef_
-
-# importance = np.abs(coefficients)
-
-# %%
-
-# features = [featureDict.get(key) for key in np.argsort(importance)]
-# plt.figure(figsize=(6, 12))
-# plt.barh(range(len(features)), importance[np.argsort(importance)])
-# plt.yticks(range(len(features)),features)
-# plt.show()
-
-# search.best_estimator_.named_steps['model'].score(X_val, y_val)
 # %%
 
 
