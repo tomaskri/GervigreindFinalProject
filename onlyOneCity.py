@@ -197,6 +197,8 @@ def getCityData(city):
     X = X[np.argsort(y)[10:-10], :]
     y = y[np.argsort(y)[10:-10]]
 
+    
+
     neighbourhoods, neighbourhood_names = neighbourhood_onehot(X[:,5])
     X = np.hstack((X[:,:5], X[:,6:]))
 
@@ -260,6 +262,11 @@ def getCityData(city):
     X = np.hstack((X, propertytype))
 
     featureNames, featureDict = getFeatureNames(neighbourhood_names, roomtype_names, propertytype_names)
+
+    shuffleIndexes = np.arange(len(y))
+    np.random.shuffle(shuffleIndexes)
+    X = X[shuffleIndexes, :]
+    y = y[shuffleIndexes]
 
     return X, y, featureNames, featureDict
 # %%
