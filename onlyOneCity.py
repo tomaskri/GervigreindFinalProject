@@ -1,4 +1,5 @@
 #%%
+#import required packages for the following functions 
 from sklearn.preprocessing import StandardScaler
 import matplotlib as mpl
 import numpy as np
@@ -11,6 +12,8 @@ from sklearn.inspection import permutation_importance
 import geopy.distance as dist
 from sklearn.metrics import r2_score
 
+# Calculates the distance from each listing from the city center
+# (city center coordinates obtained from google)
 def getKilometersFromCenter(data, city):
     kilometers = np.zeros(data.shape[0])
     if city == 'copenhagen':
@@ -57,6 +60,7 @@ def selectPropertyType(type, X, y):
             ylist.append(y[i])
     return np.array(xlist), np.array(ylist)
 
+# One hot encoding for the type of property 
 def oneHotEncodingPropertyType(type, X):
     isType = np.zeros(X.shape[0])
     print(X.shape)
@@ -65,7 +69,9 @@ def oneHotEncodingPropertyType(type, X):
             isType[i] = 1.0
     return isType
 
-def plotPredVsReal(yreal, ypred, limit):
+# Scatter diagram showing predicted price vs real price
+# y = x axis added for reference
+def plotPredVsReal(yreal, ypred, limit=750):
     plt.scatter(yreal, ypred, label="pred vs true")
     plt.plot(yreal, yreal, label="y=x", c='red')
     plt.xlabel("y-real")
@@ -81,6 +87,7 @@ def host_Since_fix(X):
         yearsSince[i] = 2022 - int(X[i].split('-')[0])
     return yearsSince
 
+# Create a bar chart showing the importance of features in decreasing order
 def plot_feature_importance(best_model, X, y, featureDict):
     permut = permutation_importance(best_model, X, y, scoring='r2')
     importance = permut.importances_mean
@@ -95,6 +102,7 @@ def plot_feature_importance(best_model, X, y, featureDict):
     # plt.xticks(rotation=90)
     plt.show()
 
+# Heat map that showd the location of the city, its center, and the price
 def plotCity(longAndLat, y):
     heatmapColors = np.clip(y, 0, 800)
     indexes = np.argsort(y)
@@ -105,6 +113,7 @@ def plotCity(longAndLat, y):
     plt.legend()
     plt.show()
 
+# One hot encoding for all amenities (1 if present, 0 if not)
 def amenitiesOneHot(X, amenityName):
     amenities = []
     for i in range(X.shape[0]):
@@ -116,6 +125,7 @@ def amenitiesOneHot(X, amenityName):
             if(amenities[i][j]==amenityName):
                 amenity[i] = 1
     return amenity
+
 
 def cleanBathroomFeature(X, y, featureNum):
     bathroomErr = []
@@ -129,6 +139,7 @@ def cleanBathroomFeature(X, y, featureNum):
     y = np.delete(y, bathroomErr)
     return X, y
 
+# Convert local currency to USD
 def cleanCurrency(y, city):
     exchange =1
     if city=='copenhagen': exchange = 0.1579
@@ -140,6 +151,7 @@ def cleanCurrency(y, city):
         y[i] = float(re.sub(",", "", (y[i][1:])))*exchange
     return y
 
+# One hot encoding for the neighbourhood that the listing is in
 def neighbourhood_onehot(X):
     unique = np.unique(X)
     hoods = np.zeros((X.shape[0], len(unique)))
@@ -196,8 +208,11 @@ def getCityData(city):
     
     X = X[np.argsort(y)[10:-10], :]
     y = y[np.argsort(y)[10:-10]]
-
-    
+    #re-shuffling the data
+    con_xy = np.hstack((X,y.reshape(-1,1)))
+    np.random.shuffle(con_xy)
+    X = con_xy[:,:-1]
+    y = con_xy[:,-1]
 
     neighbourhoods, neighbourhood_names = neighbourhood_onehot(X[:,5])
     X = np.hstack((X[:,:5], X[:,6:]))
@@ -263,11 +278,7 @@ def getCityData(city):
 
     featureNames, featureDict = getFeatureNames(neighbourhood_names, roomtype_names, propertytype_names)
 
-    shuffleIndexes = np.arange(len(y))
-    np.random.shuffle(shuffleIndexes)
-    X = X[shuffleIndexes, :]
-    y = y[shuffleIndexes]
-
+    
     return X, y, featureNames, featureDict
 # %%
 city = 'copenhagen'
@@ -275,40 +286,14 @@ X, y, featureNames, featureDict = getCityData(city)
 
 
 # %%
-# SVM implemented with leave-one-out cross-validation
-# from sklearn.model_selection import LeaveOneOut
-# from sklearn.model_selection import cross_val_score
-# from sklearn.svm import SVR
-
-
-# X_data = np.asarray(X).astype('float32')
-# y_data = np.asarray(y).astype('float32')
-# # adding the price column back to feature array before shuffling
-# all_data = np.append(X_data, y_data.reshape(-1,1), axis=1)
-# np.random.shuffle(all_data)
-# X_data = all_data[:,:-1]
-# y_data = all_data[:,-1]
-
-# svr_model = SVR(C=60, epsilon=0.95)
-# loo = LeaveOneOut()
-# scores = cross_val_score(estimator=svr_model, 
-#                         X=X_data, 
-#                         y=y_data, 
-#                         scoring='r2',
-#                         cv=loo,
-#                         n_jobs=-1)
-
-# mean_score = np.mean(scores)
-# print(mean_score)
-
-# %%
-# SVR implemented with k-fold cross-validation (dataset too large for leave-one-out)
-from sklearn.model_selection import KFold
+# Linear regression implemented with leave-one-out cross-validation (dataset too large for leave-one-out)
+from sklearn.model_selection import KFold, LeaveOneOut
 from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVR, NuSVR
 from sklearn import metrics
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
 
 
 X_data = np.asarray(X).astype('float32')
@@ -317,23 +302,23 @@ y_data = np.asarray(y).astype('float32')
 X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2) 
 # adding the price column back to feature array before shuffling
 
-svr_pipeline = make_pipeline(StandardScaler(), NuSVR(nu=0.8, C=60))
-print(svr_pipeline)
-# svr_pipeline.fit(X_train, y_train)
-cv = KFold(n_splits=5)
-scores = cross_val_score(estimator=svr_pipeline, 
-                        X=X_data, 
-                        y=y_data, 
-                        scoring='r2',
+lin_reg = make_pipeline(StandardScaler(), LinearRegression())
+# linear_pipeline.fit(X_train, y_train)
+# lin_reg = LinearRegression()
+cv = LeaveOneOut()
+scores = cross_val_score(estimator=lin_reg, 
+                        X=X_train, 
+                        y=y_train, 
+                        scoring='neg_mean_squared_error',
                         cv=cv,
                         n_jobs=-1)
 print(scores)
-mean_score = np.mean(scores)
+
+#%%
+mean_score = np.mean(np.sqrt(np.absolute(scores)))
 print(mean_score)
 
-# %%
-import sklearn
-sklearn.metrics.get_scorer_names()
+
 #%%
 # Neural network on chosen city
 
@@ -345,29 +330,7 @@ y = np.asarray(y).astype('float32')
 X_train, X_testval, y_train, y_testval = train_test_split(X, y, test_size=0.20)
 X_test, X_val, y_test, y_val = train_test_split(X_testval, y_testval, test_size=0.5)
 
-print(X_train.shape, X_test.shape, X_val.shape)  
-
-
-# %%
-from sklearn.linear_model import LinearRegression
-
-linear_model = LinearRegression()
-score = 0
-predictions = []
-for i in range(X.shape[0]):
-    X_train = np.delete(X, i, axis=0)
-    y_train = np.delete(y, i)
-    X_test = X[i, :].reshape(1, -1)
-    linear_model.fit(X_train, y_train)
-    predictions.append(linear_model.predict(X_test)) 
-
-print(city, "LeaveOneOut r2:", round(r2_score(y, predictions),4))
-
-
-
-
-
-
+print(X_train.shape, X_test.shape, X_val.shape) 
 # %%
 #normalize our data
 from sklearn.preprocessing import StandardScaler
@@ -376,7 +339,58 @@ X_train_sc = X_scaler.fit_transform(X_train)
 X_val_sc = X_scaler.transform(X_val)
 X_test_sc = X_scaler.transform(X_test)
 
-X_train_sc.shape
+X_train_sc.shape 
+
+
+# %%
+import time
+def LeaveOneOut(model, X, y, n_points=0):
+    start = time.time()
+    if (n_points!=0):
+        X = X[:n_points,:]
+        y = y[:n_points]
+    predictions = []
+    print(X.shape[0])
+    for i in range(X_.shape[0]):
+        if (i % 5 == 0):
+            print("iteraton: ", i, "Time since start:", "%.2f" % (time.time()-start), "seconds")
+        X_train = np.delete(X, i, axis=0)
+        y_train = np.delete(y, i)
+        X_test = X[i, :].reshape(1, -1)
+        model.fit(X_train, y_train)
+        predictions.append(model.predict(X_test)) 
+
+    return predictions
+
+#%%
+# Applying leave-one-out cross validation using linear regression model
+from sklearn.linear_model import LinearRegression
+linear_model = LinearRegression()
+n_points = 500
+predictions_LR = LeaveOneOut(linear_model, X, y, n_points)
+print(city, "Linear regression leave-one-out r2:", round(r2_score(y[:n_points], predictions_LR),4))
+plotPredVsReal(yreal=y[:n_points], ypred=predictions_LR, limit=750)
+
+#%%
+# Applying leave-one-out cross validation using NuSVR model
+# Takes 21 hours and 20 minutes
+from sklearn.svm import NuSVR
+nusvr = NuSVR(C=60, nu=0.8)
+n_points = 1000
+predictions_NuSVR = LeaveOneOut(nusvr, X, y, n_points)
+print(city, "NuSVR leave-one-out r2:", round(r2_score(y[:n_points], predictions_NuSVR),4))
+plotPredVsReal(yreal=y[:n_points], ypred=predictions_NuSVR, limit=750)
+
+#%%
+# Applying leave-one-out cross validation using Gradient boosting model
+# takes 10 hours and 37 minutes
+from sklearn.ensemble import GradientBoostingRegressor
+gbr = GradientBoostingRegressor()
+n_points = 4000
+predictions_gbr = LeaveOneOut(gbr, X, y, n_points=n_points)
+print(city, "Gradient boosting regression leave-one-out r2:", round(r2_score(y[:n_points], predictions_gbr),4))
+plotPredVsReal(yreal=y[:n_points], ypred=predictions_gbr, limit=750)
+
 # %%
 
 from tensorflow import keras
@@ -454,26 +468,27 @@ plot_feature_importance(model, X_val_sc, y_val, featureDict)
 from sklearn.ensemble import RandomForestRegressor
 best_score = 0
 best_model = RandomForestRegressor()
+
 for i in range(8):
     regr_model = RandomForestRegressor(max_depth=int(i*0.5+4), random_state=0, n_estimators=12*i+20)
-    regr_model.fit(X_train, y_train)
-    score = regr_model.score(X_val, y_val)
+    regr_model.fit(X_train_sc, y_train)
+    score = regr_model.score(X_val_sc, y_val)
     if(score >best_score):
         best_score = score
         best_model = regr_model
 
 
-
-regr_train_score = best_model.score(X_train, y_train)
-regr_test_score = best_model.score(X_test, y_test)
-regr_val_score = best_model.score(X_val, y_val)
+print(best_model)
+regr_train_score = best_model.score(X_train_sc, y_train)
+regr_test_score = best_model.score(X_test_sc, y_test)
+regr_val_score = best_model.score(X_val_sc, y_val)
 
 print("Training score: ", regr_train_score)
 print("Test score: ", regr_test_score)
 print("Validation score: ", regr_val_score)
 
 
-plotPredVsReal(y_test, best_model.predict(X_test), 750)
+plotPredVsReal(y_test, best_model.predict(X_test_sc), 750)
 
 
 # %%
@@ -559,3 +574,69 @@ plt.show()
 
 
 # %%
+# Gradient boosting regressor hyperparameter tuning
+
+
+
+
+#%%
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+def averageScore(model, X, y, repitions=10, test_size = 0.2):
+    train_scores = []
+    test_scores = []
+    i = 0
+    while i < repitions:
+        i += 1
+        X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=test_size)
+        X_scaler = StandardScaler()
+        X_train = X_scaler.fit_transform(X_train)
+        X_test = X_scaler.transform(X_test)
+        model.fit(X_train, y_train)
+
+        pred_train = model.predict(X_train)
+        score_train = r2_score(y_train, pred_train)
+        train_scores.append(score_train)
+
+        pred_test = model.predict(X_test)
+        score_test = r2_score(y_test, pred_test)
+        test_scores.append(score_test)
+
+    avg_train = np.round(np.mean(train_scores),4)
+    avg_test = np.round(np.mean(test_scores),4)
+    return avg_test, avg_train
+
+#%%
+city = 'copenhagen'
+X, y, featureNames, featureDict = getCityData(city)
+
+#%%
+# calculate average scores of LinearRegression
+from sklearn.linear_model import LinearRegression
+LR_train, LR_test = averageScore(LinearRegression(),X,y, test_size=0.4)
+print("Linear Regression avg train score: ", LR_train)
+print("Linear Regression avg test score: ", LR_test)
+    
+#%%
+# calculate average scores of NuSVR
+from sklearn.svm import NuSVR
+nusvr = NuSVR(C=60, nu=0.8)
+Nu_train, Nu_test = averageScore(nusvr,X,y, test_size=0.4)
+print("NuSVR avg train score: ", Nu_train)
+print("NuSVR avg test score: ", Nu_test)
+
+#%%
+# calculate average scores of GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+gbr = GradientBoostingRegressor()
+Gbr_train, Gbr_test = averageScore(gbr,X,y, test_size=0.4)
+print("Gradient boosting regressor avg train score: ", Gbr_train)
+print("Gradient boosting regressor avg test score: ", Gbr_test)
+
+#%%
+# calculate average scores of RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor
+rfg = RandomForestRegressor(max_depth=7, n_estimators=92)
+rfg_train, rfg_test = averageScore(rfg,X,y, test_size = 0.4)
+print("Random forest regressor avg train score: ", rfg_train)
+print("Random forest regressor avg test score: ", rfg_test)
