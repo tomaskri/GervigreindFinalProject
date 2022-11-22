@@ -208,6 +208,11 @@ def getCityData(city):
     
     X = X[np.argsort(y)[10:-10], :]
     y = y[np.argsort(y)[10:-10]]
+    #re-shuffling the data
+    con_xy = np.hstack((X,y.reshape(-1,1)))
+    np.random.shuffle(con_xy)
+    X = con_xy[:,:-1]
+    y = con_xy[:,-1]
 
     neighbourhoods, neighbourhood_names = neighbourhood_onehot(X[:,5])
     X = np.hstack((X[:,:5], X[:,6:]))
@@ -273,6 +278,7 @@ def getCityData(city):
 
     featureNames, featureDict = getFeatureNames(neighbourhood_names, roomtype_names, propertytype_names)
 
+    
     return X, y, featureNames, featureDict
 # %%
 city = 'copenhagen'
@@ -356,16 +362,18 @@ print(X_train.shape, X_test.shape, X_val.shape)
 
 # %%
 import time
-def LeaveOneOut(model, X, y):
+def LeaveOneOut(model, X, y, n_points):
     start = time.time()
+    X_ = X[:n_points,:]
+    y_ = y[:n_points]
     predictions = []
     print(X.shape[0])
-    for i in range(X.shape[0]):
-        if (i % 100 == 5):
+    for i in range(X_.shape[0]):
+        if (i % 5 == 0):
             print("iteraton: ", i, ". Time since start:", "%.2f" % (time.time()-start))
-        X_train = np.delete(X, i, axis=0)
-        y_train = np.delete(y, i)
-        X_test = X[i, :].reshape(1, -1)
+        X_train = np.delete(X_, i, axis=0)
+        y_train = np.delete(y_, i)
+        X_test = X_[i, :].reshape(1, -1)
         model.fit(X_train, y_train)
         predictions.append(model.predict(X_test)) 
 
@@ -375,9 +383,10 @@ def LeaveOneOut(model, X, y):
 # Applying leave-one-out cross validation using linear regression model
 from sklearn.linear_model import LinearRegression
 linear_model = LinearRegression()
-predictions_LR = LeaveOneOut(linear_model, X, y)
-print(city, "Linear regression leave-one-out r2:", round(r2_score(y, predictions_LR),4))
-plotPredVsReal(yreal=y, ypred=predictions_LR, limit=750)
+n_points = 500
+predictions_LR = LeaveOneOut(linear_model, X, y, n_points)
+print(city, "Linear regression leave-one-out r2:", round(r2_score(y[:n_points], predictions_LR),4))
+plotPredVsReal(yreal=y[:n_points], ypred=predictions_LR, limit=750)
 
 #%%
 # Applying leave-one-out cross validation using NuSVR model
