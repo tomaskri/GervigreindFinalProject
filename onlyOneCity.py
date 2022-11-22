@@ -286,33 +286,6 @@ X, y, featureNames, featureDict = getCityData(city)
 
 
 # %%
-# SVM implemented with leave-one-out cross-validation
-# from sklearn.model_selection import LeaveOneOut
-# from sklearn.model_selection import cross_val_score
-# from sklearn.svm import SVR
-
-
-# X_data = np.asarray(X).astype('float32')
-# y_data = np.asarray(y).astype('float32')
-# # adding the price column back to feature array before shuffling
-# all_data = np.append(X_data, y_data.reshape(-1,1), axis=1)
-# np.random.shuffle(all_data)
-# X_data = all_data[:,:-1]
-# y_data = all_data[:,-1]
-
-# svr_model = SVR(C=60, epsilon=0.95)
-# loo = LeaveOneOut()
-# scores = cross_val_score(estimator=svr_model, 
-#                         X=X_data, 
-#                         y=y_data, 
-#                         scoring='r2',
-#                         cv=loo,
-#                         n_jobs=-1)
-
-# mean_score = np.mean(scores)
-# print(mean_score)
-
-# %%
 # Linear regression implemented with leave-one-out cross-validation (dataset too large for leave-one-out)
 from sklearn.model_selection import KFold, LeaveOneOut
 from sklearn.model_selection import cross_val_score
@@ -362,18 +335,19 @@ print(X_train.shape, X_test.shape, X_val.shape)
 
 # %%
 import time
-def LeaveOneOut(model, X, y, n_points):
+def LeaveOneOut(model, X, y, n_points=0):
     start = time.time()
-    X_ = X[:n_points,:]
-    y_ = y[:n_points]
+    if (n_points!=0):
+        X = X[:n_points,:]
+        y = y[:n_points]
     predictions = []
     print(X.shape[0])
     for i in range(X_.shape[0]):
         if (i % 5 == 0):
-            print("iteraton: ", i, ". Time since start:", "%.2f" % (time.time()-start))
-        X_train = np.delete(X_, i, axis=0)
-        y_train = np.delete(y_, i)
-        X_test = X_[i, :].reshape(1, -1)
+            print("iteraton: ", i, "Time since start:", "%.2f" % (time.time()-start), "seconds")
+        X_train = np.delete(X, i, axis=0)
+        y_train = np.delete(y, i)
+        X_test = X[i, :].reshape(1, -1)
         model.fit(X_train, y_train)
         predictions.append(model.predict(X_test)) 
 
@@ -598,3 +572,42 @@ plt.show()
 
 
 # %%
+# Gradient boosting regressor hyperparameter tuning
+
+
+
+
+#%%
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+def averageScore(model, X, y, repitions=10):
+    train_scores = []
+    test_scores = []
+    i = 0
+    while i < repitions:
+        i += 1
+        X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2)
+        X_scaler = StandardScaler()
+        X_train = X_scaler.fit_transform(X_train)
+        X_test = X_scaler.transform(X_test)
+        model.fit(X_train, y_train)
+        pred_train = model.predict(X_train)
+        score_train = r2_score(y_train, pred_train)
+        train_scores.append(score_train)
+        pred_test = model.predict(X_test)
+        score_test = r2_score(y_test, pred_test)
+        test_scores.append(score_test)
+    avg_train = np.round(np.mean(train_scores),4)
+    avg_test = np.round(np.mean(test_scores),4)
+    return avg_test, avg_train
+
+#%%
+city = 'copenhagen'
+X, y, featureNames, featureDict = getCityData(city)
+
+#%%
+from sklearn.linear_model import LinearRegression
+LR_train, LR_test = averageScore(LinearRegression(),X,y)
+print("Linear Regression avg train score: ", LR_train)
+print("Linear Regression avg test score: ", LR_test)
+    
