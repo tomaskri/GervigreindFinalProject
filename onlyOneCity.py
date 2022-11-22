@@ -403,9 +403,9 @@ plotPredVsReal(yreal=y[:n_points], ypred=predictions_NuSVR, limit=750)
 # takes 10 hours and 37 minutes
 from sklearn.ensemble import GradientBoostingRegressor
 gbr = GradientBoostingRegressor()
-n_points = 500
+n_points = 4000
 predictions_gbr = LeaveOneOut(gbr, X, y, n_points=n_points)
-print(city, "Linear regression leave-one-out r2:", round(r2_score(y[:n_points], predictions_gbr),4))
+print(city, "Gradient boosting regression leave-one-out r2:", round(r2_score(y[:n_points], predictions_gbr),4))
 plotPredVsReal(yreal=y[:n_points], ypred=predictions_gbr, limit=750)
 # %%
 #normalize our data
