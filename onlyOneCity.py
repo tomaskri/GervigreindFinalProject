@@ -1,4 +1,5 @@
 #%%
+#import required packages for the following functions 
 from sklearn.preprocessing import StandardScaler
 import matplotlib as mpl
 import numpy as np
@@ -11,6 +12,8 @@ from sklearn.inspection import permutation_importance
 import geopy.distance as dist
 from sklearn.metrics import r2_score
 
+# Calculates the distance from each listing from the city center
+# (city center coordinates obtained from google)
 def getKilometersFromCenter(data, city):
     kilometers = np.zeros(data.shape[0])
     if city == 'copenhagen':
@@ -57,6 +60,7 @@ def selectPropertyType(type, X, y):
             ylist.append(y[i])
     return np.array(xlist), np.array(ylist)
 
+# One hot encoding for the type of property 
 def oneHotEncodingPropertyType(type, X):
     isType = np.zeros(X.shape[0])
     print(X.shape)
@@ -65,7 +69,9 @@ def oneHotEncodingPropertyType(type, X):
             isType[i] = 1.0
     return isType
 
-def plotPredVsReal(yreal, ypred, limit):
+# Scatter diagram showing predicted price vs real price
+# y = x axis added for reference
+def plotPredVsReal(yreal, ypred, limit=750):
     plt.scatter(yreal, ypred, label="pred vs true")
     plt.plot(yreal, yreal, label="y=x", c='red')
     plt.xlabel("y-real")
@@ -81,6 +87,7 @@ def host_Since_fix(X):
         yearsSince[i] = 2022 - int(X[i].split('-')[0])
     return yearsSince
 
+# Create a bar chart showing the importance of features in decreasing order
 def plot_feature_importance(best_model, X, y, featureDict):
     permut = permutation_importance(best_model, X, y, scoring='r2')
     importance = permut.importances_mean
@@ -95,6 +102,7 @@ def plot_feature_importance(best_model, X, y, featureDict):
     # plt.xticks(rotation=90)
     plt.show()
 
+# Heat map that showd the location of the city, its center, and the price
 def plotCity(longAndLat, y):
     heatmapColors = np.clip(y, 0, 800)
     indexes = np.argsort(y)
@@ -105,6 +113,7 @@ def plotCity(longAndLat, y):
     plt.legend()
     plt.show()
 
+# One hot encoding for all amenities (1 if present, 0 if not)
 def amenitiesOneHot(X, amenityName):
     amenities = []
     for i in range(X.shape[0]):
@@ -116,6 +125,7 @@ def amenitiesOneHot(X, amenityName):
             if(amenities[i][j]==amenityName):
                 amenity[i] = 1
     return amenity
+
 
 def cleanBathroomFeature(X, y, featureNum):
     bathroomErr = []
@@ -129,6 +139,7 @@ def cleanBathroomFeature(X, y, featureNum):
     y = np.delete(y, bathroomErr)
     return X, y
 
+# Convert local currency to USD
 def cleanCurrency(y, city):
     exchange =1
     if city=='copenhagen': exchange = 0.1579
@@ -140,6 +151,7 @@ def cleanCurrency(y, city):
         y[i] = float(re.sub(",", "", (y[i][1:])))*exchange
     return y
 
+# One hot encoding for the neighbourhood that the listing is in
 def neighbourhood_onehot(X):
     unique = np.unique(X)
     hoods = np.zeros((X.shape[0], len(unique)))
@@ -295,13 +307,14 @@ X, y, featureNames, featureDict = getCityData(city)
 # print(mean_score)
 
 # %%
-# SVR implemented with k-fold cross-validation (dataset too large for leave-one-out)
-from sklearn.model_selection import KFold
+# Linear regression implemented with leave-one-out cross-validation (dataset too large for leave-one-out)
+from sklearn.model_selection import KFold, LeaveOneOut
 from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVR, NuSVR
 from sklearn import metrics
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
 
 
 X_data = np.asarray(X).astype('float32')
@@ -310,23 +323,23 @@ y_data = np.asarray(y).astype('float32')
 X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2) 
 # adding the price column back to feature array before shuffling
 
-svr_pipeline = make_pipeline(StandardScaler(), NuSVR(nu=0.8, C=60))
-print(svr_pipeline)
-# svr_pipeline.fit(X_train, y_train)
-cv = KFold(n_splits=5)
-scores = cross_val_score(estimator=svr_pipeline, 
-                        X=X_data, 
-                        y=y_data, 
-                        scoring='r2',
+lin_reg = make_pipeline(StandardScaler(), LinearRegression())
+# linear_pipeline.fit(X_train, y_train)
+# lin_reg = LinearRegression()
+cv = LeaveOneOut()
+scores = cross_val_score(estimator=lin_reg, 
+                        X=X_train, 
+                        y=y_train, 
+                        scoring='neg_mean_squared_error',
                         cv=cv,
                         n_jobs=-1)
 print(scores)
-mean_score = np.mean(scores)
+
+#%%
+mean_score = np.mean(np.sqrt(np.absolute(scores)))
 print(mean_score)
 
-# %%
-import sklearn
-sklearn.metrics.get_scorer_names()
+
 #%%
 # Neural network on chosen city
 
@@ -456,7 +469,7 @@ for i in range(8):
         best_model = regr_model
 
 
-
+print(best_model)
 regr_train_score = best_model.score(X_train, y_train)
 regr_test_score = best_model.score(X_test, y_test)
 regr_val_score = best_model.score(X_val, y_val)
