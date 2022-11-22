@@ -355,25 +355,47 @@ print(X_train.shape, X_test.shape, X_val.shape)
 
 
 # %%
+import time
+def LeaveOneOut(model, X, y):
+    start = time.time()
+    predictions = []
+    print(X.shape[0])
+    for i in range(X.shape[0]):
+        if (i % 100 == 5):
+            print("iteraton: ", i, ". Time since start:", "%.2f" % (time.time()-start))
+        X_train = np.delete(X, i, axis=0)
+        y_train = np.delete(y, i)
+        X_test = X[i, :].reshape(1, -1)
+        model.fit(X_train, y_train)
+        predictions.append(model.predict(X_test)) 
+
+    return predictions
+
+#%%
+# Applying leave-one-out cross validation using linear regression model
 from sklearn.linear_model import LinearRegression
-
 linear_model = LinearRegression()
-score = 0
-predictions = []
-for i in range(X.shape[0]):
-    X_train = np.delete(X, i, axis=0)
-    y_train = np.delete(y, i)
-    X_test = X[i, :].reshape(1, -1)
-    linear_model.fit(X_train, y_train)
-    predictions.append(linear_model.predict(X_test)) 
+predictions_LR = LeaveOneOut(linear_model, X, y)
+print(city, "Linear regression leave-one-out r2:", round(r2_score(y, predictions_LR),4))
+plotPredVsReal(yreal=y, ypred=predictions_LR, limit=750)
 
-print(city, "LeaveOneOut r2:", round(r2_score(y, predictions),4))
+#%%
+# Applying leave-one-out cross validation using NuSVR model
+# Takes 21 hours and 20 minutes
+from sklearn.svm import NuSVR
+nusvr = NuSVR(C=60, nu=0.8)
+predictions_NuSVR = LeaveOneOut(nusvr, X, y)
+print(city, "Linear regression leave-one-out r2:", round(r2_score(y, predictions_LR),4))
+plotPredVsReal(yreal=y, ypred=predictions_NuSVR, limit=750)
 
-
-
-
-
-
+#%%
+# Applying leave-one-out cross validation using Gradient boosting model
+# takes 10 hours and 37 minutes
+from sklearn.ensemble import GradientBoostingRegressor
+gbr = GradientBoostingRegressor()
+predictions_NuSVR = LeaveOneOut(gbr, X, y)
+print(city, "Linear regression leave-one-out r2:", round(r2_score(y, predictions_LR),4))
+plotPredVsReal(yreal=y, ypred=predictions_NuSVR, limit=750)
 # %%
 #normalize our data
 from sklearn.preprocessing import StandardScaler
