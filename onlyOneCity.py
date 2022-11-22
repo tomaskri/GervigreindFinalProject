@@ -393,18 +393,20 @@ plotPredVsReal(yreal=y[:n_points], ypred=predictions_LR, limit=750)
 # Takes 21 hours and 20 minutes
 from sklearn.svm import NuSVR
 nusvr = NuSVR(C=60, nu=0.8)
-predictions_NuSVR = LeaveOneOut(nusvr, X, y)
-print(city, "Linear regression leave-one-out r2:", round(r2_score(y, predictions_LR),4))
-plotPredVsReal(yreal=y, ypred=predictions_NuSVR, limit=750)
+n_points = 1000
+predictions_NuSVR = LeaveOneOut(nusvr, X, y, n_points)
+print(city, "NuSVR leave-one-out r2:", round(r2_score(y[:n_points], predictions_NuSVR),4))
+plotPredVsReal(yreal=y[:n_points], ypred=predictions_NuSVR, limit=750)
 
 #%%
 # Applying leave-one-out cross validation using Gradient boosting model
 # takes 10 hours and 37 minutes
 from sklearn.ensemble import GradientBoostingRegressor
 gbr = GradientBoostingRegressor()
-predictions_NuSVR = LeaveOneOut(gbr, X, y)
-print(city, "Linear regression leave-one-out r2:", round(r2_score(y, predictions_LR),4))
-plotPredVsReal(yreal=y, ypred=predictions_NuSVR, limit=750)
+n_points = 500
+predictions_gbr = LeaveOneOut(gbr, X, y, n_points=n_points)
+print(city, "Linear regression leave-one-out r2:", round(r2_score(y[:n_points], predictions_gbr),4))
+plotPredVsReal(yreal=y[:n_points], ypred=predictions_gbr, limit=750)
 # %%
 #normalize our data
 from sklearn.preprocessing import StandardScaler
