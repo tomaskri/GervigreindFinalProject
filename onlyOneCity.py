@@ -329,7 +329,7 @@ def getImportantFeatureIndexes(X, y):
     search.fit(X,y)
     # print(search.best_params_)
     coefficients = search.best_estimator_.named_steps['model'].coef_
-    nonzeroImportanceIndexes = np.where(coefficients > 0.0001)[0]
+    nonzeroImportanceIndexes = np.where(coefficients != 0)[0]
     print(nonzeroImportanceIndexes)
     return nonzeroImportanceIndexes
 
@@ -642,9 +642,8 @@ from sklearn.model_selection import GridSearchCV
 def averageScore(model, X, y, repitions=10, test_size = 0.2):
     train_scores = []
     test_scores = []
-    i = 0
-    while i < repitions:
-        i += 1
+    i = 1
+    while i <= repitions:
         X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=test_size)
         X_scaler = StandardScaler()
         X_train = X_scaler.fit_transform(X_train)
@@ -658,6 +657,8 @@ def averageScore(model, X, y, repitions=10, test_size = 0.2):
         pred_test = model.predict(X_test)
         score_test = r2_score(y_test, pred_test)
         test_scores.append(score_test)
+        print("Iteration:", i, "Test score: ", np.round(score_test,4))
+        i += 1
 
     avg_train = np.round(np.mean(train_scores),4)
     avg_test = np.round(np.mean(test_scores),4)
@@ -666,13 +667,19 @@ def averageScore(model, X, y, repitions=10, test_size = 0.2):
 #%%
 city = 'copenhagen'
 X, y, featureNames, featureDict = getCityData(city)
+featureIndexes = getImportantFeatureIndexes(X,y)
+X = keepImportantFeatures(X, featureIndexes)
+print(X.shape, y.shape)
 
 #%%
 # calculate average scores of LinearRegression
 from sklearn.linear_model import LinearRegression
-LR_train, LR_test = averageScore(LinearRegression(),X,y, test_size=0.1)
+LR_train, LR_test = averageScore(LinearRegression(),X,y, test_size=0.2)
 print("Linear Regression avg train score: ", LR_train)
 print("Linear Regression avg test score: ", LR_test)
+
+# Linear Regression avg train score:  0.5418
+# Linear Regression avg test score:  0.5375
     
 #%%
 #nuSVR grid search
@@ -690,12 +697,12 @@ print("best score: ", results.best_score_)
 # calculate average scores of NuSVR
 from sklearn.svm import NuSVR
 nusvr = NuSVR(C=70, nu=0.6)
-Nu_train, Nu_test = averageScore(nusvr,X,y, test_size=0.4)
+Nu_train, Nu_test = averageScore(nusvr,X,y, test_size=0.2)
 print("NuSVR avg train score: ", np.round(np.mean(Nu_train),4))
 print("NuSVR avg test score: ", np.round(np.mean(Nu_test),4))
 
-# NuSVR avg train score:  0.6241
-# NuSVR avg test score:  0.5275
+# NuSVR avg train score:  0.6469
+# NuSVR avg test score:  0.5502
 
 #%%
 # Hyperparameter tuning GradientBoostingRegressor
@@ -728,12 +735,12 @@ print('Best Hyperparameters: %s' % result.best_params_)
 # calculate average scores of GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 gbr = GradientBoostingRegressor(n_estimators = 250, max_depth = 4, learning_rate = 0.1)
-Gbr_train, Gbr_test = averageScore(gbr,X,y, test_size=0.1)
+Gbr_train, Gbr_test = averageScore(gbr,X,y, test_size=0.2)
 print("Gradient boosting regressor avg train score: ", Gbr_train)
 print("Gradient boosting regressor avg test score: ", Gbr_test)
 
-# Gradient boosting regressor avg train score:  0.7552
-# Gradient boosting regressor avg test score:  0.574
+# Gradient boosting regressor avg train score:  0.7961
+# Gradient boosting regressor avg test score:  0.5969
 
 #%%
 #Grid search for random forest regressor
@@ -748,7 +755,7 @@ print('Best Hyperparemters: %s' % result.best_params_)
 # calculate average scores of RandomForestRegressor
 from sklearn.ensemble import RandomForestRegressor
 rfg = RandomForestRegressor(max_depth=9, n_estimators=80)
-rfg_train, rfg_test = averageScore(rfg,X,y, test_size = 0.4)
+rfg_train, rfg_test = averageScore(rfg,X,y, test_size = 0.2)
 print("Random forest regressor avg train score: ", np.round(np.mean(rfg_train),4))
 print("Random forest regressor avg test score: ", np.round(np.mean(rfg_test),4))
 # Random forest regressor avg train score:  0.7517
@@ -763,8 +770,15 @@ result = xgbGrid.fit(X,y)
 print('Best Score: %s' % result.best_score_)
 print('Best Hyperparemters: %s' % result.best_params_)
 
+# Best Score: 0.5696514199007726
+# Best Hyperparemters: {'colsample_bytree': 0.7, 'learning_rate': 0.1, 'max_depth': 4, 
+#                         'n_estimators': 112, 'subsample': 0.8999999999999999}
+
+
 #%%
-xgb_train, xgb_test = averageScore(rfg,X,y, test_size = 0.4)
+import xgboost as xgb
+xgb = xgb.XGBRegressor(colsample_bytree = 0.7, learning_rate=0.1, max_depth = 4, n_estimators=112, subsample=0.9)
+xgb_train, xgb_test = averageScore(xgb,X,y, test_size = 0.4)
 print("Xg Boost regressor avg train score: ", np.round(np.mean(rfg_train),4))
 print("XgBoost regressor avg test score: ", np.round(np.mean(rfg_test),4))
 
@@ -784,34 +798,8 @@ gbr.score(X[oob], y[oob])
 
 
 
-
 # %%
-city = 'copenhagen'
-X, y, featureNames, featureDict = getCityData(city)
-X = np.asarray(X).astype('float32')
-y = np.asarray(y).astype('float32')
-X_train, X_testval, y_train, y_testval = train_test_split(X, y, test_size=0.20)
-
-import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.linear_model import Lasso
-pipeline = Pipeline([
-                     ('scaler',StandardScaler()),
-                     ('model',Lasso())
-])
-search = GridSearchCV(pipeline,
-                      {'model__alpha':np.arange(0.1,10,0.1)},
-                      cv = 5, scoring="r2",verbose=3
-                      )
-search.fit(X_train,y_train)
-print(search.best_params_)
-coefficients = search.best_estimator_.named_steps['model'].coef_
-pipeline
-importance = np.abs(coefficients)
 time = get_date_string()
-# %%
 features = [featureDict.get(key) for key in np.argsort(importance)]
 with PdfPages(RESULTS_DIR / f"Feature_importances_{time}.pdf") as pdf:
     plt.figure(figsize=(6, 10))
@@ -824,18 +812,8 @@ with PdfPages(RESULTS_DIR / f"Feature_importances_{time}.pdf") as pdf:
     plt.gca().set_axisbelow(True)
     pdf.savefig(bbox_inches="tight")
     plt.close()
-
-search.score(X_test, y_test)
-# %%
-nonzeroImportanceIndexes = np.where(coefficients != 0)[0]
 # %%
 plotCity(X[:,[26,27]], y)
-# %%
-X.shape
-
-# %%
-X_train = np.array(X_train)[:, list(nonzeroImportanceIndexes[0])]
-# %%
 
 #%%
 # Calculate average score of neural network
@@ -860,7 +838,7 @@ def averageScoreNN(X, y, repititions=10, test_size=0.2):
     lr = 0.0001
     train_scores = []
     val_scores = []
-    i = 0
+    i = 1
     while(i < repititions):
         i += 1
         X_train, X_val, y_train, y_val = train_test_split(X,y,test_size=test_size)
