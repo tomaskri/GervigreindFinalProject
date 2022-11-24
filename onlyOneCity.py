@@ -11,6 +11,12 @@ import ast
 from sklearn.inspection import permutation_importance
 import geopy.distance as dist
 from sklearn.metrics import r2_score
+from pathlib import Path
+from matplotlib.backends.backend_pdf import PdfPages
+from datetime import datetime
+
+CURRENT_DIR = Path(__file__).parent
+RESULTS_DIR = CURRENT_DIR / "Results"
 
 # Calculates the distance from each listing from the city center
 # (city center coordinates obtained from google)
@@ -50,6 +56,22 @@ def string_features_to_num(array):
         values[i] = dictOfWords.get(array[i])
         
     return values, dictOfWords
+
+def get_date_string():
+    now = datetime.now()
+    date_time = str(now)
+    date_time = date_time[0:19]
+    date_array = []
+
+    for i in range(len(date_time)):
+        date_array.append(date_time[i])
+        if date_array[i] == ' ' or date_array[i] == '-' or date_array[i] == ':':
+            date_array[i] = '_'
+
+    date_str = ''
+    for j in date_array:
+        date_str = date_str+j
+    return date_str
 
 def selectPropertyType(type, X, y):
     xlist = []
@@ -107,11 +129,18 @@ def plotCity(longAndLat, y):
     heatmapColors = np.clip(y, 0, 800)
     indexes = np.argsort(y)
     # c=scaler.fit_transform(y.reshape(-1,1))
-    plt.scatter(longAndLat[indexes,1], longAndLat[indexes,0], c=heatmapColors[indexes], cmap=mpl.colormaps['hot'])
-    plt.colorbar()
-    plt.scatter(0, 0, label='center')
-    plt.legend()
-    plt.show()
+    with PdfPages(RESULTS_DIR / f"City_map_{city}.pdf") as pdf:
+        plt.title(f"Price by distance from center: {city}")
+        plt.xlabel("Km from center east/west")
+        plt.ylabel("Km from center north/south")
+        plt.scatter(longAndLat[indexes,1], longAndLat[indexes,0], c=heatmapColors[indexes], cmap=mpl.colormaps['hot'])
+        plt.colorbar()
+        plt.scatter(0, 0, label='center')
+        plt.legend()
+        plt.grid(True)
+        plt.gca().set_axisbelow(True)
+        pdf.savefig(bbox_inches="tight")
+        plt.close()
 
 # One hot encoding for all amenities (1 if present, 0 if not)
 def amenitiesOneHot(X, amenityName):
@@ -324,7 +353,7 @@ print(mean_score)
 
 X = np.asarray(X).astype('float32')
 y = np.asarray(y).astype('float32')
-
+X[:, nonzeroImportanceIndexes[0]]
 
 
 X_train, X_testval, y_train, y_testval = train_test_split(X, y, test_size=0.20)
@@ -542,11 +571,11 @@ y_val = pd.DataFrame(y_val, dtype='float')
 
 # Fitting the model
 # learning_rate=0.3, gamma =0.3 ,max_depth=3, n_estimators=17,
-
+# learning_rate=0.22, max_depth=3, subsample=0.9, colsample_bytree = 0.7, n_estimators=100, eval_metric="rmse"
 
 eval_set = [(X_val, y_val)]
 # 
-xgb_reg = xgb.XGBRegressor(learning_rate=0.22, max_depth=3, subsample=0.9, colsample_bytree = 0.7, n_estimators=100, eval_metric="rmse")
+xgb_reg = xgb.XGBRegressor()
 # , verbose=True
 xgb_reg.fit(X_train, y_train, eval_set=eval_set)
 training_preds_xgb_reg = xgb_reg.predict(X_train)
@@ -582,6 +611,7 @@ plt.show()
 #%%
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV    
 def averageScore(model, X, y, repitions=10, test_size = 0.2):
     train_scores = []
     test_scores = []
@@ -604,7 +634,7 @@ def averageScore(model, X, y, repitions=10, test_size = 0.2):
 
     avg_train = np.round(np.mean(train_scores),4)
     avg_test = np.round(np.mean(test_scores),4)
-    return avg_test, avg_train
+    return train_scores, test_scores
 
 #%%
 city = 'copenhagen'
@@ -620,10 +650,10 @@ print("Linear Regression avg test score: ", LR_test)
 #%%
 # calculate average scores of NuSVR
 from sklearn.svm import NuSVR
-nusvr = NuSVR(C=60, nu=0.8)
-Nu_train, Nu_test = averageScore(nusvr,X,y, test_size=0.4)
-print("NuSVR avg train score: ", Nu_train)
-print("NuSVR avg test score: ", Nu_test)
+# nusvr = NuSVR(C=60, nu=0.8)
+Nu_train, Nu_test = averageScore(GridSearchCV(NuSVR(), {'C':np.arange(40,80,10), 'nu':np.arange(0.5,1.0,0.1)},cv = 3, scoring="r2",verbose=3),X,y, test_size=0.4)
+print("NuSVR avg train score: ", np.round(np.mean(Nu_train),4))
+print("NuSVR avg test score: ", np.round(np.mean(Nu_test),4))
 
 #%%
 # calculate average scores of GradientBoostingRegressor
@@ -636,7 +666,78 @@ print("Gradient boosting regressor avg test score: ", Gbr_test)
 #%%
 # calculate average scores of RandomForestRegressor
 from sklearn.ensemble import RandomForestRegressor
-rfg = RandomForestRegressor(max_depth=7, n_estimators=92)
+rfg = GridSearchCV(RandomForestRegressor(),{'max_depth':np.arange(6,10,1), 'n_estimators':np.arange(70,100,5)}, cv = 3, scoring="r2",verbose=3)
 rfg_train, rfg_test = averageScore(rfg,X,y, test_size = 0.4)
-print("Random forest regressor avg train score: ", rfg_train)
-print("Random forest regressor avg test score: ", rfg_test)
+print("Random forest regressor avg train score: ", np.round(np.mean(rfg_train),4))
+print("Random forest regressor avg test score: ", np.round(np.mean(rfg_test),4))
+#%%
+# calculate average scores of RandomForestRegressor
+# learning_rate=0.22, max_depth=3, subsample=0.9, colsample_bytree = 0.7, n_estimators=100, eval_metric="rmse"
+from sklearn.ensemble import RandomForestRegressor
+xgb_m = GridSearchCV(xgb.XGBRegressor(),{'learning_rate':np.arange(0.1,0.3,0.2), 'max_depth':np.arange(2,5,1),'n_estimators':np.arange(80,120,4), 'subsample':np.arange(0.6,1,0.1), 'colsample_bytree':np.arange(0.6,1,0.1)}, cv = 2, scoring="r2",verbose=3)
+xgb_train, xgb_test = averageScore(rfg,X,y, test_size = 0.4)
+print("Xg Boost regressor avg train score: ", np.round(np.mean(rfg_train),4))
+print("XgBoost regressor avg test score: ", np.round(np.mean(rfg_test),4))
+
+# %%
+from sklearn.utils import resample
+# data sample
+# prepare bootstrap sample
+boot = resample(range(X.shape[0]), replace=True, n_samples=round(X.shape[0]*0.8))
+# print('Bootstrap Sample: %s' % boot)
+# out of bag observations
+oob = [datum for datum in range(X.shape[0]) if datum not in boot]
+# print('OOB Sample: %s' % oob)
+gbr = GradientBoostingRegressor()
+gbr.fit(X[boot], y[boot])
+gbr.score(X[oob], y[oob])
+
+
+
+
+
+# %%
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.linear_model import Lasso
+pipeline = Pipeline([
+                     ('scaler',StandardScaler()),
+                     ('model',Lasso())
+])
+search = GridSearchCV(pipeline,
+                      {'model__alpha':np.arange(0.1,10,0.1)},
+                      cv = 5, scoring="r2",verbose=3
+                      )
+search.fit(X_train,y_train)
+print(search.best_params_)
+coefficients = search.best_estimator_.named_steps['model'].coef_
+pipeline
+importance = np.abs(coefficients)
+time = get_date_string()
+# %%
+features = [featureDict.get(key) for key in np.argsort(importance)]
+with PdfPages(RESULTS_DIR / f"Feature_importances_{time}.pdf") as pdf:
+    plt.figure(figsize=(6, 10))
+    plt.title("Feature Importances")
+    plt.barh(range(len(features)), importance[np.argsort(importance)])
+    plt.yticks(range(len(features)),features)
+    plt.xlabel("Coeffecient")
+    plt.ylabel("Features")
+    plt.grid(True)
+    plt.gca().set_axisbelow(True)
+    pdf.savefig(bbox_inches="tight")
+    plt.close()
+
+search.score(X_test, y_test)
+# %%
+nonzeroImportanceIndexes = np.where(coefficients != 0)[0]
+# %%
+plotCity(X[:,[26,27]], y)
+# %%
+X.shape
+
+# %%
+X_train = np.array(X_train)[:, list(nonzeroImportanceIndexes[0])]
+# %%
