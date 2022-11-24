@@ -643,7 +643,7 @@ X, y, featureNames, featureDict = getCityData(city)
 #%%
 # calculate average scores of LinearRegression
 from sklearn.linear_model import LinearRegression
-LR_train, LR_test = averageScore(LinearRegression(),X,y, test_size=0.4)
+LR_train, LR_test = averageScore(LinearRegression(),X,y, test_size=0.1)
 print("Linear Regression avg train score: ", LR_train)
 print("Linear Regression avg test score: ", LR_test)
     
@@ -656,10 +656,37 @@ print("NuSVR avg train score: ", np.round(np.mean(Nu_train),4))
 print("NuSVR avg test score: ", np.round(np.mean(Nu_test),4))
 
 #%%
+# Hyperparameter tuning GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import RepeatedKFold
+from sklearn.model_selection import GridSearchCV
+
+# parameters to tune: n_estimators, max_depth, learning_rate
+param_grid = [{
+    'n_estimators': [25, 50, 100, 250],
+    'max_depth': [2, 4, 6, 8, 10],
+    'learning_rate': [0.001, 0.01, 0.1, 0.25]
+}]
+gbr = GradientBoostingRegressor(verbose=1)
+# method used for scoring
+cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=1)
+# defining the random search
+search = GridSearchCV(gbr, param_grid, scoring='r2', n_jobs=-1, cv=cv)
+# execute search
+result = search.fit(X, y)
+# summarize results
+print('Best Score: %s' % result.best_score_)
+print('Best Hyperparameters: %s' % result.best_params_)
+
+# Results:
+# Best Score: 0.5887628461521962
+# Best Hyperparameters: {'learning_rate': 0.1, 'max_depth': 4, 'n_estimators': 250}
+
+#%%
 # calculate average scores of GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingRegressor
-gbr = GradientBoostingRegressor()
-Gbr_train, Gbr_test = averageScore(gbr,X,y, test_size=0.4)
+gbr = GradientBoostingRegressor(n_estimators = 250, max_depth = 4, learning_rate = 0.1)
+Gbr_train, Gbr_test = averageScore(gbr,X,y, test_size=0.1)
 print("Gradient boosting regressor avg train score: ", Gbr_train)
 print("Gradient boosting regressor avg test score: ", Gbr_test)
 
