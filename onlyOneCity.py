@@ -235,6 +235,7 @@ def getCityData(city):
     
     y = cleanCurrency(y, city)
     
+    #removing 10 most expensive and 10 cheapest listings
     X = X[np.argsort(y)[10:-10], :]
     y = y[np.argsort(y)[10:-10]]
     #re-shuffling the data
@@ -309,9 +310,42 @@ def getCityData(city):
 
     
     return X, y, featureNames, featureDict
+
+#%%
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.linear_model import Lasso
+def getImportantFeatureIndexes(X, y):
+    pipeline = Pipeline([
+                        ('scaler',StandardScaler()),
+                        ('model',Lasso())
+    ])
+    search = GridSearchCV(pipeline,
+                        {'model__alpha':np.arange(0.05,2,0.1)},
+                        cv = 5, scoring="r2",verbose=0
+                        )
+    search.fit(X,y)
+    # print(search.best_params_)
+    coefficients = search.best_estimator_.named_steps['model'].coef_
+    nonzeroImportanceIndexes = np.where(coefficients > 0.0001)[0]
+    print(nonzeroImportanceIndexes)
+    return nonzeroImportanceIndexes
+
+#%%
+
+#%%
+def keepImportantFeatures(X, indexes):
+    X = np.array(X)[:, indexes]
+    return X
+
 # %%
 city = 'copenhagen'
 X, y, featureNames, featureDict = getCityData(city)
+featureIndexes = getImportantFeatureIndexes(X,y)
+X = keepImportantFeatures(X, featureIndexes)
+print(X.shape, y.shape)
 
 
 # %%
@@ -376,16 +410,19 @@ import time
 def LeaveOneOut(model, X, y, n_points=0):
     start = time.time()
     if (n_points!=0):
-        X = X[:n_points,:]
-        y = y[:n_points]
+        X_ = X[:n_points,:]
+        y_ = y[:n_points]
+    else:
+        X_ = X
+        y_ = y
     predictions = []
-    print(X.shape[0])
+    print(X_.shape[0])
     for i in range(X_.shape[0]):
         if (i % 5 == 0):
             print("iteraton: ", i, "Time since start:", "%.2f" % (time.time()-start), "seconds")
-        X_train = np.delete(X, i, axis=0)
-        y_train = np.delete(y, i)
-        X_test = X[i, :].reshape(1, -1)
+        X_train = np.delete(X_, i, axis=0)
+        y_train = np.delete(y_, i)
+        X_test = X_[i, :].reshape(1, -1)
         model.fit(X_train, y_train)
         predictions.append(model.predict(X_test)) 
 
@@ -395,7 +432,7 @@ def LeaveOneOut(model, X, y, n_points=0):
 # Applying leave-one-out cross validation using linear regression model
 from sklearn.linear_model import LinearRegression
 linear_model = LinearRegression()
-n_points = 500
+n_points = y.shape[0]
 predictions_LR = LeaveOneOut(linear_model, X, y, n_points)
 print(city, "Linear regression leave-one-out r2:", round(r2_score(y[:n_points], predictions_LR),4))
 plotPredVsReal(yreal=y[:n_points], ypred=predictions_LR, limit=750)
@@ -521,6 +558,7 @@ plotPredVsReal(y_test, best_model.predict(X_test_sc), 750)
 
 
 # %%
+# NuSVR hyperparameter tuning and evaluation
 from sklearn.svm import NuSVR
 best_score = 0
 best_model = NuSVR()
@@ -531,9 +569,10 @@ for i in range(20):
     if(score >best_score):
         best_score = score
         best_model = svr_model
+print(best_model)
 
 
-
+#%%
 svr_train_score = best_model.score(X_train, y_train)
 svr_test_score = best_model.score(X_test, y_test)
 svr_val_score = best_model.score(X_val, y_val)
@@ -545,11 +584,6 @@ plotPredVsReal(y_test, best_model.predict(X_test), 750)
 
 
 # %%
-
-
-
-
-
 import math
 import pandas as pd
 
@@ -601,13 +635,6 @@ plt.xlabel("Feature importance")
 plt.margins(y=0.01)
 plt.show()
 
-
-# %%
-# Gradient boosting regressor hyperparameter tuning
-
-
-
-
 #%%
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -634,7 +661,7 @@ def averageScore(model, X, y, repitions=10, test_size = 0.2):
 
     avg_train = np.round(np.mean(train_scores),4)
     avg_test = np.round(np.mean(test_scores),4)
-    return train_scores, test_scores
+    return avg_train, avg_test
 
 #%%
 city = 'copenhagen'
@@ -648,12 +675,27 @@ print("Linear Regression avg train score: ", LR_train)
 print("Linear Regression avg test score: ", LR_test)
     
 #%%
+#nuSVR grid search
+from sklearn.svm import NuSVR
+from sklearn.model_selection import GridSearchCV
+nusvrgrid = GridSearchCV(NuSVR(), {'C':np.arange(40,80,10), 'nu':np.arange(0.5,1.0,0.1)},cv = 3, scoring="r2",verbose=3)
+results = nusvrgrid.fit(X,y)
+#%%
+print("best params: ", results.best_params_)
+print("best score: ", results.best_score_)
+# Best params: C = 70, nu = 0.6
+# Best score
+
+#%%
 # calculate average scores of NuSVR
 from sklearn.svm import NuSVR
-# nusvr = NuSVR(C=60, nu=0.8)
-Nu_train, Nu_test = averageScore(GridSearchCV(NuSVR(), {'C':np.arange(40,80,10), 'nu':np.arange(0.5,1.0,0.1)},cv = 3, scoring="r2",verbose=3),X,y, test_size=0.4)
+nusvr = NuSVR(C=70, nu=0.6)
+Nu_train, Nu_test = averageScore(nusvr,X,y, test_size=0.4)
 print("NuSVR avg train score: ", np.round(np.mean(Nu_train),4))
 print("NuSVR avg test score: ", np.round(np.mean(Nu_test),4))
+
+# NuSVR avg train score:  0.6241
+# NuSVR avg test score:  0.5275
 
 #%%
 # Hyperparameter tuning GradientBoostingRegressor
@@ -667,11 +709,11 @@ param_grid = [{
     'max_depth': [2, 4, 6, 8, 10],
     'learning_rate': [0.001, 0.01, 0.1, 0.25]
 }]
-gbr = GradientBoostingRegressor(verbose=1)
+gbr = GradientBoostingRegressor()
 # method used for scoring
 cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=1)
 # defining the random search
-search = GridSearchCV(gbr, param_grid, scoring='r2', n_jobs=-1, cv=cv)
+search = GridSearchCV(gbr, param_grid, scoring='r2', n_jobs=-1, cv=cv, verbose=3)
 # execute search
 result = search.fit(X, y)
 # summarize results
@@ -690,18 +732,38 @@ Gbr_train, Gbr_test = averageScore(gbr,X,y, test_size=0.1)
 print("Gradient boosting regressor avg train score: ", Gbr_train)
 print("Gradient boosting regressor avg test score: ", Gbr_test)
 
+# Gradient boosting regressor avg train score:  0.7552
+# Gradient boosting regressor avg test score:  0.574
+
+#%%
+#Grid search for random forest regressor
+from sklearn.ensemble import RandomForestRegressor
+rfg_grid = GridSearchCV(RandomForestRegressor(),{'max_depth':np.arange(6,10,1), 'n_estimators':np.arange(70,100,5)}, cv = 3, scoring="r2",verbose=3)
+result = rfg_grid.fit(X,y)
+print('Best Score: %s' % result.best_score_)
+print('Best Hyperparemters: %s' % result.best_params_)
+# Best Score: 0.5367102817445683
+# Best Hyperparameters: {'max_depth': 9, 'n_estimators': 80}
 #%%
 # calculate average scores of RandomForestRegressor
 from sklearn.ensemble import RandomForestRegressor
-rfg = GridSearchCV(RandomForestRegressor(),{'max_depth':np.arange(6,10,1), 'n_estimators':np.arange(70,100,5)}, cv = 3, scoring="r2",verbose=3)
+rfg = RandomForestRegressor(max_depth=9, n_estimators=80)
 rfg_train, rfg_test = averageScore(rfg,X,y, test_size = 0.4)
 print("Random forest regressor avg train score: ", np.round(np.mean(rfg_train),4))
 print("Random forest regressor avg test score: ", np.round(np.mean(rfg_test),4))
+# Random forest regressor avg train score:  0.7517
+# Random forest regressor avg test score:  0.5398
 #%%
-# calculate average scores of RandomForestRegressor
-# learning_rate=0.22, max_depth=3, subsample=0.9, colsample_bytree = 0.7, n_estimators=100, eval_metric="rmse"
-from sklearn.ensemble import RandomForestRegressor
-xgb_m = GridSearchCV(xgb.XGBRegressor(),{'learning_rate':np.arange(0.1,0.3,0.2), 'max_depth':np.arange(2,5,1),'n_estimators':np.arange(80,120,4), 'subsample':np.arange(0.6,1,0.1), 'colsample_bytree':np.arange(0.6,1,0.1)}, cv = 2, scoring="r2",verbose=3)
+# calculate average scores of XGBoost
+!pip install xgboost
+import xgboost as xgb
+# learning_rate=0.22, max_depth=3, subsample=0.9, colsample_bytree = 0.7, n_estimators=100, eval_metric="rmse" 
+xgbGrid = GridSearchCV(xgb.XGBRegressor(),{'learning_rate':np.arange(0.1,0.3,0.2), 'max_depth':np.arange(2,5,1),'n_estimators':np.arange(80,120,4), 'subsample':np.arange(0.6,1,0.1), 'colsample_bytree':np.arange(0.6,1,0.1)}, cv = 2, scoring="r2",verbose=3)
+result = xgbGrid.fit(X,y)
+print('Best Score: %s' % result.best_score_)
+print('Best Hyperparemters: %s' % result.best_params_)
+
+#%%
 xgb_train, xgb_test = averageScore(rfg,X,y, test_size = 0.4)
 print("Xg Boost regressor avg train score: ", np.round(np.mean(rfg_train),4))
 print("XgBoost regressor avg test score: ", np.round(np.mean(rfg_test),4))
@@ -724,6 +786,12 @@ gbr.score(X[oob], y[oob])
 
 
 # %%
+city = 'copenhagen'
+X, y, featureNames, featureDict = getCityData(city)
+X = np.asarray(X).astype('float32')
+y = np.asarray(y).astype('float32')
+X_train, X_testval, y_train, y_testval = train_test_split(X, y, test_size=0.20)
+
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
@@ -768,3 +836,80 @@ X.shape
 # %%
 X_train = np.array(X_train)[:, list(nonzeroImportanceIndexes[0])]
 # %%
+
+#%%
+# Calculate average score of neural network
+from tensorflow import keras
+from tensorflow.keras import layers
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+from keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
+import time
+
+def averageScoreNN(X, y, repititions=10, test_size=0.2):
+    start = time.time()
+    callback = EarlyStopping(monitor = 'val_loss'
+                                , patience = 4
+                                , verbose = 1
+                                , mode = 'auto'
+                                , min_delta = 0.0001)
+
+    num_epochs = 400
+    b_size = 16
+    lr = 0.0001
+    train_scores = []
+    val_scores = []
+    i = 0
+    while(i < repititions):
+        i += 1
+        X_train, X_val, y_train, y_val = train_test_split(X,y,test_size=test_size)
+        X_scaler = StandardScaler()
+        X_train = X_scaler.fit_transform(X_train)
+        X_val = X_scaler.transform(X_val)
+        # SGD: larger learning rate (0.06), Adam: smaller learning rate
+        model = Sequential()
+        model.add(Dense(units=64, input_dim=X.shape[1], kernel_initializer='normal', activation='relu'))
+        model.add(Dropout(0.2))
+        model.add(Dense(units=128, kernel_initializer='normal', activation='relu'))
+        model.add(Dense(1, activation='linear', kernel_initializer='normal'))
+        print(model.summary())
+        model.compile(loss="msle", optimizer=Adam(learning_rate=lr), metrics = ['msle'])
+
+        history = model.fit(X_train, y_train,
+                        batch_size = b_size,
+                        epochs = num_epochs,
+                        verbose = 1,
+                        validation_data=(X_val, y_val),
+                        callbacks = [callback])
+
+        import matplotlib.pyplot as plt
+        plt.plot(history.history['msle'])
+        plt.plot(history.history['val_msle'])
+        plt.ylabel('msle')
+        plt.xlabel('epoch')
+        plt.title('Neural Network')
+        plt.legend(['train', 'validation'])
+        plt.show()
+
+        pred_train = model.predict(X_train)
+        score_train = r2_score(y_train, pred_train)
+        train_scores.append(score_train)
+
+        pred_val = model.predict(X_val)
+        plotPredVsReal(y_val, pred_val, 750)
+        score_val = r2_score(y_val, pred_val)
+        val_scores.append(score_val)
+        print(i, "Val r2:", round(score_val,4), "Time since start: ","%.2f" % (time.time()-start), "seconds")
+        
+    avg_train = np.round(np.mean(train_scores),4)
+    avg_test = np.round(np.mean(val_scores),4)
+    return avg_train, avg_test 
+
+
+#%%
+X_nn = np.asarray(X).astype('float32')
+y_nn = np.asarray(y).astype('float32')
+NN_train, NN_test = averageScoreNN(X_nn,y_nn)
+print("Neural Network avg train score: ", NN_train)
+print("Neural Network avg test score: ", NN_test)
