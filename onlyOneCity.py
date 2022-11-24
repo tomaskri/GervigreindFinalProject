@@ -341,7 +341,7 @@ def keepImportantFeatures(X, indexes):
     return X
 
 # %%
-city = 'copenhagen'
+city = 'stockholm'
 X, y, featureNames, featureDict = getCityData(city)
 featureIndexes = getImportantFeatureIndexes(X,y)
 X = keepImportantFeatures(X, featureIndexes)
@@ -665,7 +665,7 @@ def averageScore(model, X, y, repitions=10, test_size = 0.2):
     return avg_train, avg_test
 
 #%%
-city = 'copenhagen'
+city = 'paris'
 X, y, featureNames, featureDict = getCityData(city)
 featureIndexes = getImportantFeatureIndexes(X,y)
 X = keepImportantFeatures(X, featureIndexes)
@@ -713,7 +713,7 @@ from sklearn.model_selection import GridSearchCV
 # parameters to tune: n_estimators, max_depth, learning_rate
 param_grid = [{
     'n_estimators': [25, 50, 100, 250],
-    'max_depth': [2, 4, 6, 8, 10],
+    'max_depth': [2, 4, 6, 8],
     'learning_rate': [0.001, 0.01, 0.1, 0.25]
 }]
 gbr = GradientBoostingRegressor()
