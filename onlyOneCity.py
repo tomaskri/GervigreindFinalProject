@@ -758,10 +758,11 @@ rfg = RandomForestRegressor(max_depth=9, n_estimators=80)
 rfg_train, rfg_test = averageScore(rfg,X,y, test_size = 0.2)
 print("Random forest regressor avg train score: ", np.round(np.mean(rfg_train),4))
 print("Random forest regressor avg test score: ", np.round(np.mean(rfg_test),4))
-# Random forest regressor avg train score:  0.7517
-# Random forest regressor avg test score:  0.5398
+# Random forest regressor avg train score:  0.756
+# Random forest regressor avg test score:  0.5451
+
 #%%
-# calculate average scores of XGBoost
+#Grid search xgboost
 !pip install xgboost
 import xgboost as xgb
 # learning_rate=0.22, max_depth=3, subsample=0.9, colsample_bytree = 0.7, n_estimators=100, eval_metric="rmse" 
@@ -776,11 +777,15 @@ print('Best Hyperparemters: %s' % result.best_params_)
 
 
 #%%
+#Average scores xgboost
 import xgboost as xgb
 xgb = xgb.XGBRegressor(colsample_bytree = 0.7, learning_rate=0.1, max_depth = 4, n_estimators=112, subsample=0.9)
 xgb_train, xgb_test = averageScore(xgb,X,y, test_size = 0.4)
-print("Xg Boost regressor avg train score: ", np.round(np.mean(rfg_train),4))
-print("XgBoost regressor avg test score: ", np.round(np.mean(rfg_test),4))
+print("Xg Boost regressor avg train score: ", np.round(np.mean(xgb_train),4))
+print("XgBoost regressor avg test score: ", np.round(np.mean(xgb_test),4))
+
+# Xg Boost regressor avg train score:  0.7376
+# XgBoost regressor avg test score:  0.5831
 
 # %%
 from sklearn.utils import resample
@@ -839,8 +844,7 @@ def averageScoreNN(X, y, repititions=10, test_size=0.2):
     train_scores = []
     val_scores = []
     i = 1
-    while(i < repititions):
-        i += 1
+    while(i <= repititions):
         X_train, X_val, y_train, y_val = train_test_split(X,y,test_size=test_size)
         X_scaler = StandardScaler()
         X_train = X_scaler.fit_transform(X_train)
@@ -848,8 +852,8 @@ def averageScoreNN(X, y, repititions=10, test_size=0.2):
         # SGD: larger learning rate (0.06), Adam: smaller learning rate
         model = Sequential()
         model.add(Dense(units=64, input_dim=X.shape[1], kernel_initializer='normal', activation='relu'))
-        model.add(Dropout(0.2))
-        model.add(Dense(units=128, kernel_initializer='normal', activation='relu'))
+        model.add(Dropout(0.15))
+        model.add(Dense(units=256, kernel_initializer='normal', activation='relu'))
         model.add(Dense(1, activation='linear', kernel_initializer='normal'))
         print(model.summary())
         model.compile(loss="msle", optimizer=Adam(learning_rate=lr), metrics = ['msle'])
@@ -879,7 +883,8 @@ def averageScoreNN(X, y, repititions=10, test_size=0.2):
         score_val = r2_score(y_val, pred_val)
         val_scores.append(score_val)
         print(i, "Val r2:", round(score_val,4), "Time since start: ","%.2f" % (time.time()-start), "seconds")
-        
+        i += 1
+
     avg_train = np.round(np.mean(train_scores),4)
     avg_test = np.round(np.mean(val_scores),4)
     return avg_train, avg_test 
@@ -888,6 +893,10 @@ def averageScoreNN(X, y, repititions=10, test_size=0.2):
 #%%
 X_nn = np.asarray(X).astype('float32')
 y_nn = np.asarray(y).astype('float32')
-NN_train, NN_test = averageScoreNN(X_nn,y_nn)
+NN_train, NN_test = averageScoreNN(X_nn,y_nn, repititions=10)
 print("Neural Network avg train score: ", NN_train)
 print("Neural Network avg test score: ", NN_test)
+
+# Neural Network avg train score:  0.5914
+# Neural Network avg test score:  0.5609
+# %%
