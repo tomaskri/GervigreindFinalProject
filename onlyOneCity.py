@@ -93,15 +93,18 @@ def oneHotEncodingPropertyType(type, X):
 
 # Scatter diagram showing predicted price vs real price
 # y = x axis added for reference
-def plotPredVsReal(yreal, ypred, limit=750):
-    plt.scatter(yreal, ypred, label="pred vs true")
-    plt.plot(yreal, yreal, label="y=x", c='red')
-    plt.xlabel("y-real")
-    plt.ylabel("y-pred")
-    plt.xlim((0,limit))
-    plt.ylim((0,limit))
-    plt.legend()
-    plt.show
+def plotPredVsReal(yreal, ypred):
+    with PdfPages(RESULTS_DIR / f"PredVSReal_{time}.pdf") as pdf:
+        plt.scatter(yreal, ypred, label="listing", s=0.4)
+        plt.plot(yreal, yreal, label="y=x", c='red', linewidth=0.5, linestyle='dashed')
+        plt.xlabel("y-real")
+        plt.ylabel("y-pred")
+        plt.legend()
+        pdf.savefig(bbox_inches="tight")
+        plt.close()
+        
+        
+    
 
 def host_Since_fix(X):
     yearsSince = np.zeros(X.shape[0])
@@ -341,7 +344,7 @@ def keepImportantFeatures(X, indexes):
     return X
 
 # %%
-city = 'stockholm'
+city = 'copenhagen'
 X, y, featureNames, featureDict = getCityData(city)
 featureIndexes = getImportantFeatureIndexes(X,y)
 X = keepImportantFeatures(X, featureIndexes)
@@ -665,8 +668,9 @@ def averageScore(model, X, y, repitions=10, test_size = 0.2):
     return avg_train, avg_test
 
 #%%
-city = 'paris'
+city = 'stockholm'
 X, y, featureNames, featureDict = getCityData(city)
+print(X.shape, y.shape)
 featureIndexes = getImportantFeatureIndexes(X,y)
 X = keepImportantFeatures(X, featureIndexes)
 print(X.shape, y.shape)
@@ -712,13 +716,13 @@ from sklearn.model_selection import GridSearchCV
 
 # parameters to tune: n_estimators, max_depth, learning_rate
 param_grid = [{
-    'n_estimators': [25, 50, 100, 250],
-    'max_depth': [2, 4, 6, 8],
-    'learning_rate': [0.001, 0.01, 0.1, 0.25]
+    'n_estimators': np.arange(230,270,5),
+    'max_depth': [3,4,5],
+    'learning_rate': np.arange(0.06,0.14, 2)
 }]
 gbr = GradientBoostingRegressor()
 # method used for scoring
-cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=1)
+cv = RepeatedKFold(n_splits=2, n_repeats=2, random_state=1)
 # defining the random search
 search = GridSearchCV(gbr, param_grid, scoring='r2', n_jobs=-1, cv=cv, verbose=3)
 # execute search
@@ -763,7 +767,7 @@ print("Random forest regressor avg test score: ", np.round(np.mean(rfg_test),4))
 
 #%%
 #Grid search xgboost
-!pip install xgboost
+#!pip install xgboost
 import xgboost as xgb
 # learning_rate=0.22, max_depth=3, subsample=0.9, colsample_bytree = 0.7, n_estimators=100, eval_metric="rmse" 
 xgbGrid = GridSearchCV(xgb.XGBRegressor(),{'learning_rate':np.arange(0.1,0.3,0.2), 'max_depth':np.arange(2,5,1),'n_estimators':np.arange(80,120,4), 'subsample':np.arange(0.6,1,0.1), 'colsample_bytree':np.arange(0.6,1,0.1)}, cv = 2, scoring="r2",verbose=3)
@@ -900,3 +904,11 @@ print("Neural Network avg test score: ", NN_test)
 # Neural Network avg train score:  0.5914
 # Neural Network avg test score:  0.5609
 # %%
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2)
+gbr = GradientBoostingRegressor(n_estimators = 250, max_depth = 4, learning_rate = 0.1)
+gbr.fit(X_train[:,:], y_train)
+time = get_date_string()
+plotPredVsReal(y_test, gbr.predict(X_test[:,:]))
+gbr.score(X_test[:,:], y_test)
+# %%
+
